@@ -3,6 +3,7 @@ import pandas as pd
 import datetime as dt
 import streamlit as st
 import plotly.express as px
+import matplotlib.pyplot as plt
 
 # Importing the dataset
 # Start from 1 Aug 2021 (first record of vaccination rate)
@@ -41,7 +42,7 @@ df['7 days Moving Average'].fillna(df['Daily Confirmed'], inplace=True)
 # Display table
 initial_columns = ['Date', 'Still Hospitalised','Phase','7 days Moving Average', 'Percentage Vaccinated']
 df = df[initial_columns]
-st.write("Data we will be using:")
+st.write("**Our dataset:**")
 st.write(df)
 
 
@@ -86,7 +87,7 @@ Y = merged_df.iloc[:, -1].values # STI price column
 dataframe = merged_df[['Date', 'Still Hospitalised', '7 days Moving Average', 'Percentage Vaccinated', 'STI Price']]
 dataframe = dataframe.set_index('Date')
 # Line chart
-st.write("Line chart:")
+st.write("**Line chart:**")
 st.line_chart(dataframe)
 # st.altair_chart(dataframe)
 
@@ -118,9 +119,46 @@ regressor.fit(X_Train, Y_Train)
 # print(regressor.intercept_)
 # print(regressor.coef_)
 
-# Predicting the Test set results
-Y_Pred = regressor.predict(X_Test)
+# Predicting the Training and Test set results
+Y_Pred_Train = regressor.predict(X_Train)
+Y_Pred_Test = regressor.predict(X_Test)
 
+
+
+##### Plot linear regression grqph #####
+left_column, right_column = st.columns(2)
+show_train = left_column.radio("Show training dataset:", ("Yes", "No"))
+show_test = right_column.radio("Show validation dataset:", ("Yes", "No"))
+
+y_max_train = max([max(Y_Train), max(Y_Pred_Train)])
+y_max_test = max([max(Y_Test), max(Y_Pred_Test)])
+y_max = int(max([y_max_train, y_max_test]))
+
+left_column, right_column = st.columns(2)
+x_min = left_column.number_input('x_min:', value=3000, step=1)
+x_max = right_column.number_input('x_max:', value=y_max, step=1)
+
+left_column, right_column = st.columns(2)
+y_min = left_column.number_input('y_min:', value=3000, step=1)
+y_max = right_column.number_input('y_max:', value=y_max, step=1)
+
+fig = plt.figure(figsize=(5, 5))
+if show_train == 'Yes':
+	plt.scatter(Y_Train, Y_Pred_Train,lw=0.1,color="r",label="training data")
+if show_test == 'Yes':
+	plt.scatter(Y_Test, Y_Pred_Test,lw=0.1,color="b",label="validation data")
+plt.xlabel("Variables",fontsize=8)
+plt.ylabel("Predicted STI",fontsize=8)
+plt.xlim(int(x_min), int(x_max)+5)
+plt.ylim(int(y_min), int(y_max)+5)
+plt.legend(fontsize=6)
+plt.tick_params(labelsize=6)
+st.pyplot(fig)
+
+# Display R2 score
+from sklearn.metrics import r2_score
+R2 = r2_score(Y_Test,Y_Pred_Test)
+st.write(f"**R2 score:** {R2:.3f}")
 
 
 ##### OPTIMISATION #####
@@ -164,6 +202,7 @@ X_Optimal = X[:, [0,1,2,3,4,5]]
 X_Optimal = np.array(X_Optimal, dtype=float)
 regressor_OLS = sm.OLS(endog = Y, exog = X_Optimal).fit()
 # print(regressor_OLS.summary())
+
 
 
 
