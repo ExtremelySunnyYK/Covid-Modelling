@@ -1,2 +1,3 @@
 virtenv
 .DS_Store
+.env/
